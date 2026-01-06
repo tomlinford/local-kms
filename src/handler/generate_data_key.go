@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/kms"
+
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/nsmithuk/local-kms/src/cmk"
 	"github.com/nsmithuk/local-kms/src/service"
 )
@@ -54,14 +56,14 @@ func (r *RequestHandler) generateDataKey() (Response, *GenerateDataKeyResponse) 
 		return NewMissingParameterResponse(msg), nil
 	}
 
-	if body.NumberOfBytes == nil && body.KeySpec == nil {
+	if body.NumberOfBytes == nil && body.KeySpec == "" {
 		msg := "1 validation error detected: Either KeySpec or NumberOfBytes is required."
 
 		r.logger.Warnf(msg)
 		return NewValidationExceptionResponse(msg), nil
 	}
 
-	if body.NumberOfBytes != nil && body.KeySpec != nil {
+	if body.NumberOfBytes != nil && body.KeySpec != "" {
 		msg := "1 validation error detected: Both KeySpec and NumberOfBytes cannot be provided."
 
 		r.logger.Warnf(msg)
@@ -76,17 +78,17 @@ func (r *RequestHandler) generateDataKey() (Response, *GenerateDataKeyResponse) 
 		return NewValidationExceptionResponse(msg), nil
 	}
 
-	if body.KeySpec != nil {
-		switch *body.KeySpec {
-		case "AES_128":
+	if body.KeySpec != "" {
+		switch body.KeySpec {
+		case types.DataKeySpecAes128:
 			bytesRequired = 128 / 8
 
-		case "AES_256":
+		case types.DataKeySpecAes256:
 			bytesRequired = 256 / 8
 
 		default:
 			msg := fmt.Sprintf("1 validation error detected: Value '%s' at 'KeySpec' failed to satisfy "+
-				"constraint: Member must be AES_128 or AES_256", *body.KeySpec)
+				"constraint: Member must be AES_128 or AES_256", body.KeySpec)
 
 			r.logger.Warnf(msg)
 			return NewValidationExceptionResponse(msg), nil

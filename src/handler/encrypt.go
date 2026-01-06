@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/kms"
+
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/nsmithuk/local-kms/src/cmk"
 )
 
@@ -41,9 +43,8 @@ func (r *RequestHandler) Encrypt() Response {
 		return NewValidationExceptionResponse(msg)
 	}
 
-	if body.EncryptionAlgorithm == nil {
-		d := "SYMMETRIC_DEFAULT"
-		body.EncryptionAlgorithm = &d
+	if body.EncryptionAlgorithm == "" {
+		body.EncryptionAlgorithm = types.EncryptionAlgorithmSpecSymmetricDefault
 	}
 
 	//----------------------------------
@@ -76,7 +77,7 @@ func (r *RequestHandler) Encrypt() Response {
 			return NewInvalidKeyUsageException(msg)
 		}
 
-		cipherResponse, err = k.Encrypt(body.Plaintext, cmk.EncryptionAlgorithm(*body.EncryptionAlgorithm))
+		cipherResponse, err = k.Encrypt(body.Plaintext, cmk.EncryptionAlgorithm(body.EncryptionAlgorithm))
 		if err != nil {
 			r.logger.Error(err.Error())
 			return NewInternalFailureExceptionResponse(err.Error())
@@ -104,6 +105,6 @@ func (r *RequestHandler) Encrypt() Response {
 	}{
 		KeyId:               key.GetArn(),
 		CiphertextBlob:      cipherResponse,
-		EncryptionAlgorithm: cmk.EncryptionAlgorithm(*body.EncryptionAlgorithm),
+		EncryptionAlgorithm: cmk.EncryptionAlgorithm(body.EncryptionAlgorithm),
 	})
 }
