@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/kms"
+
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/nsmithuk/local-kms/src/cmk"
 	"github.com/nsmithuk/local-kms/src/service"
 )
@@ -41,14 +43,12 @@ func (r *RequestHandler) ReEncrypt() Response {
 		return NewValidationExceptionResponse(msg)
 	}
 
-	if body.SourceEncryptionAlgorithm == nil {
-		d := "SYMMETRIC_DEFAULT"
-		body.SourceEncryptionAlgorithm = &d
+	if body.SourceEncryptionAlgorithm == "" {
+		body.SourceEncryptionAlgorithm = types.EncryptionAlgorithmSpecSymmetricDefault
 	}
 
-	if body.DestinationEncryptionAlgorithm == nil {
-		d := "SYMMETRIC_DEFAULT"
-		body.DestinationEncryptionAlgorithm = &d
+	if body.DestinationEncryptionAlgorithm == "" {
+		body.DestinationEncryptionAlgorithm = types.EncryptionAlgorithmSpecSymmetricDefault
 	}
 
 	//--------------------------------
@@ -123,7 +123,7 @@ func (r *RequestHandler) ReEncrypt() Response {
 		KeyId:                          keyDestination.GetArn(),
 		SourceKeyId:                    keySource.GetArn(),
 		CiphertextBlob:                 cipherResponse,
-		SourceEncryptionAlgorithm:      cmk.EncryptionAlgorithm(*body.SourceEncryptionAlgorithm),
-		DestinationEncryptionAlgorithm: cmk.EncryptionAlgorithm(*body.DestinationEncryptionAlgorithm),
+		SourceEncryptionAlgorithm:      cmk.EncryptionAlgorithm(body.SourceEncryptionAlgorithm),
+		DestinationEncryptionAlgorithm: cmk.EncryptionAlgorithm(body.DestinationEncryptionAlgorithm),
 	})
 }
